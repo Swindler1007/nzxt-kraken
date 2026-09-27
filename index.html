@@ -8,8 +8,9 @@
 :root{--cyan:#38e7ff;--blue:#4d83ff;--green:#65ffbd;--amber:#ffc857;--red:#ff5364;--text:#e9f7ff;--muted:#7894a5}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02050a;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text)}
 #app{position:relative;width:100vw;height:100vh;overflow:hidden;background:#02050a}
+#bgMedia{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.9) contrast(1.08) brightness(.40);transform:scale(1.04)}
 canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.95}
-.vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 25%,rgba(0,0,0,.35) 65%,rgba(0,0,0,.88) 100%);pointer-events:none}
+.vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(0,0,0,.04) 12%,rgba(0,0,0,.46) 60%,rgba(0,0,0,.90) 100%);pointer-events:none}
 .scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 4px);mix-blend-mode:screen;pointer-events:none}
 .frame{position:absolute;inset:4.5%;border:1px solid rgba(56,231,255,.18);box-shadow:inset 0 0 35px rgba(0,180,255,.045);pointer-events:none}
 .corner{position:absolute;width:14%;height:14%;border-color:rgba(56,231,255,.65);border-style:solid}
@@ -38,7 +39,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.95}
 </head>
 <body>
 <div id="app">
-<canvas id="live"></canvas>
+<video id="bgMedia" autoplay muted loop playsinline preload="auto"><source src="Cosmic_Anime_Eyes_4K.mp4" type="video/mp4"></video>
 <div class="vignette"></div><div class="scanlines"></div>
 <div class="frame"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i></div>
 
@@ -71,31 +72,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.95}
 </div>
 
 <script>
-/* ---- LIVE BACKGROUND ----
-   This is intentionally self-contained: no external image/video is needed.
-   It creates a moving dark "live photo / HUD" atmosphere behind the telemetry.
-*/
-const c=document.getElementById("live"),ctx=c.getContext("2d");
-let W=0,H=0,t=0,pts=[];
-function resize(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=innerWidth;H=innerHeight;
- pts=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H,s:.3+Math.random()*1.4,a:.15+Math.random()*.45,v:.08+Math.random()*.25}));}
-addEventListener("resize",resize);resize();
-function draw(){
- t+=.008;ctx.clearRect(0,0,W,H);
- const g=ctx.createRadialGradient(W*.5,H*.48,0,W*.5,H*.48,Math.max(W,H)*.72);
- g.addColorStop(0,"#0a2531");g.addColorStop(.35,"#06131d");g.addColorStop(1,"#02050a");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
- // moving atmospheric light
- for(let i=0;i<3;i++){let x=W*(.18+i*.33)+Math.sin(t*(.7+i)) * W*.08;let y=H*(.28+i*.15)+Math.cos(t*(.5+i)) * H*.07;
-   let rg=ctx.createRadialGradient(x,y,0,x,y,W*.18);rg.addColorStop(0,"rgba(25,170,210,.10)",);rg.addColorStop(1,"rgba(0,0,0,0)");
-   ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);}
- // floating particles / depth
- for(const p of pts){p.y-=p.v;if(p.y<0)p.y=H;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fillStyle=`rgba(90,220,255,${p.a})`;ctx.fill();}
- // subtle horizon lines
- ctx.strokeStyle="rgba(56,231,255,.045)";ctx.lineWidth=1;
- for(let y=H*.2;y<H*.9;y+=H*.1){ctx.beginPath();ctx.moveTo(0,y+Math.sin(t+y)*2);ctx.lineTo(W,y);ctx.stroke();}
- requestAnimationFrame(draw);
-}draw();
-
+/* Cosmic Anime Eyes video background. */
 const $=id=>document.getElementById(id);
 function n(v){v=Number(v);return Number.isFinite(v)?v:null}
 function read(o,paths){for(const p of paths){let x=o;for(const k of p.split(".")){if(x==null)break;x=x[k]}if(x!=null)return x}return null}
