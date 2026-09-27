@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXUS — Kraken Command Display</title>
+<style>
+:root{--bg:#05070b;--cyan:#48e6ff;--blue:#2c7dff;--white:#eaf7ff;--muted:#7190a2;--line:rgba(72,230,255,.22)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--white)}
+body{display:grid;place-items:center}
+#app{position:relative;width:100vmin;height:100vmin;max-width:640px;max-height:640px;min-width:240px;min-height:240px;overflow:hidden;border-radius:50%;
+background:
+radial-gradient(circle at 50% 42%,rgba(32,111,150,.17),transparent 35%),
+radial-gradient(circle at 50% 50%,#0b121a 0%,#05070b 62%,#020306 100%);
+}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(72,230,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(72,230,255,.035) 1px,transparent 1px);background-size:28px 28px;transform:rotate(8deg) scale(1.4)}
+.ring{position:absolute;inset:5%;border:1px solid var(--line);border-radius:50%;box-shadow:0 0 24px rgba(72,230,255,.05) inset}
+.ring:before{content:"";position:absolute;inset:3%;border:1px dashed rgba(72,230,255,.12);border-radius:50%;animation:spin 22s linear infinite}
+.arc{position:absolute;inset:8%;border-radius:50%;background:conic-gradient(from -20deg,transparent 0 12%,var(--cyan) 12.2% 12.8%,transparent 13% 48%,var(--blue) 48.2% 48.7%,transparent 49% 78%,var(--cyan) 78.2% 78.7%,transparent 79%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));animation:spin 16s linear infinite reverse}
+.header{position:absolute;top:13%;left:14%;right:14%;display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.brand{color:var(--cyan);font-weight:800}.status{display:flex;align-items:center;gap:6px}.dot{width:6px;height:6px;border-radius:50%;background:#56ffb0;box-shadow:0 0 9px #56ffb0}
+.center{position:absolute;inset:27% 18%;display:grid;place-items:center;text-align:center}
+.temp{font-size:clamp(58px,16vmin,106px);font-weight:800;line-height:.85;letter-spacing:-5px;text-shadow:0 0 22px rgba(72,230,255,.18)}
+.unit{font-size:14px;color:var(--cyan);vertical-align:top;letter-spacing:1px;margin-left:5px}
+.label{margin-top:12px;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+.sub{margin-top:7px;font-size:9px;color:#9eb6c4;letter-spacing:1px}
+.stats{position:absolute;left:13%;right:13%;bottom:16%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.card{padding:9px 5px;border-top:1px solid var(--line);text-align:center;background:linear-gradient(180deg,rgba(72,230,255,.04),transparent)}
+.v{font-size:13px;font-weight:700}.k{margin-top:3px;font-size:7px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.footer{position:absolute;bottom:9%;left:14%;right:14%;display:flex;justify-content:space-between;font-size:7px;letter-spacing:1.5px;color:#526d7d;text-transform:uppercase}
+.scan{position:absolute;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.14;animation:scan 5s ease-in-out infinite}
+.config{position:fixed;inset:auto 18px 18px auto;background:#0a1118;border:1px solid var(--line);border-radius:12px;padding:12px;color:white;z-index:20;box-shadow:0 10px 40px #000}
+.config h3{margin:0 0 8px;font-size:12px;letter-spacing:1px}.config label{font-size:9px;color:var(--muted)}.config input,.config select{width:100%;margin:4px 0 8px;background:#05080d;color:#fff;border:1px solid #1c3948;border-radius:7px;padding:6px}
+.config button{width:100%;background:#0d2733;color:var(--cyan);border:1px solid var(--line);border-radius:7px;padding:7px;font-weight:700;cursor:pointer}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes scan{0%,100%{top:30%;opacity:0}50%{top:72%;opacity:.2}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="grid"></div><div class="ring"></div><div class="arc"></div><div class="scan"></div>
+  <div class="header"><div class="brand">NEXUS // COMMAND</div><div class="status"><span class="dot"></span><span>ONLINE</span></div></div>
+  <div class="center">
+    <div>
+      <div><span id="cpuTemp" class="temp">--</span><span class="unit">°C</span></div>
+      <div class="label">CPU THERMAL CORE</div>
+      <div id="clock" class="sub">--:--:--</div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="card"><div id="gpu" class="v">--°</div><div class="k">GPU TEMP</div></div>
+    <div class="card"><div id="ram" class="v">--%</div><div class="k">RAM LOAD</div></div>
+    <div class="card"><div id="liquid" class="v">--°</div><div class="k">LIQUID</div></div>
+  </div>
+  <div class="footer"><span id="fps">TARGET -- FPS</span><span id="mode">SYSTEM // NOMINAL</span></div>
+</div>
+
+<div class="config" id="config">
+  <h3>NEXUS CONFIG</h3>
+  <label>Demo CPU temperature (only used outside CAM)</label>
+  <input id="demo" type="number" min="0" max="110" value="42">
+  <button id="save">APPLY</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const isKraken = new URLSearchParams(location.search).get("kraken") === "1";
+if (isKraken) $("config").style.display = "none";
+
+function num(v, fallback=null){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+function first(...vals){
+  for(const v of vals){ const n=num(v); if(n!==null) return n; }
+  return null;
+}
+function read(obj, paths){
+  for(const p of paths){
+    let x=obj;
+    for(const k of p.split(".")){ if(x==null) break; x=x[k]; }
+    if(x!==undefined && x!==null) return x;
+  }
+  return null;
+}
+function temp(v){ const n=num(v); return n===null ? "--" : Math.round(n)+"°"; }
+function pct(v){ const n=num(v); return n===null ? "--" : Math.round(n)+"%"; }
+
+function render(data){
+  // NZXT CAM's schema can evolve; these fallbacks make the display tolerant
+  // of common field naming differences.
+  const cpu = first(
+    read(data,["cpus.0.temperature","cpus.0.temp","cpus.0.temperature.current"]),
+    read(data,["cpu.temperature","cpu.temp"])
+  );
+  const gpu = first(
+    read(data,["gpus.0.temperature","gpus.0.temp","gpus.0.temperature.current"]),
+    read(data,["gpu.temperature","gpu.temp"])
+  );
+  const ram = first(
+    read(data,["ram.load","ram.usage","ram.utilization","ram.0.load"])
+  );
+  const liquid = first(
+    read(data,["kraken.liquidTemperature","kraken.liquidTemp","kraken.temperature","kraken.liquid.temperature"])
+  );
+
+  if(cpu!==null) $("cpuTemp").textContent=Math.round(cpu);
+  $("gpu").textContent=temp(gpu);
+  $("ram").textContent=pct(ram);
+  $("liquid").textContent=temp(liquid);
+  $("mode").textContent = "SYSTEM // "+(cpu!==null && cpu<75 ? "NOMINAL" : "THERMAL WATCH");
+}
+
+window.nzxt = {
+  v1: {
+    onMonitoringDataUpdate: (data) => render(data)
+  }
+};
+
+function demoTick(){
+  if(isKraken) return;
+  let base=num(localStorage.getItem("nexusDemoTemp"),42);
+  base += (Math.random()-.5)*1.5;
+  $("cpuTemp").textContent=Math.round(base);
+  $("gpu").textContent=Math.round(base+7+Math.random()*3)+"°";
+  $("ram").textContent=Math.round(28+Math.random()*7)+"%";
+  $("liquid").textContent=Math.round(base-8+Math.random()*2)+"°";
+  $("mode").textContent="PREVIEW // NOMINAL";
+}
+$("save").onclick=()=>{localStorage.setItem("nexusDemoTemp",$("demo").value);demoTick()};
+setInterval(demoTick,1000);
+setInterval(()=>{$("clock").textContent=new Date().toLocaleTimeString("tr-TR",{hour12:false})},250);
+$("fps").textContent="TARGET "+(window.nzxt?.v1?.targetFps || "--")+" FPS";
+</script>
+</body>
+</html>
